@@ -1,0 +1,21 @@
+# Local data (CSV test results, logos, GIFs) — not tracked, see README for setup
+/data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Environment variables
+.env

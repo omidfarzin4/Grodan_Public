@@ -1,0 +1,7 @@
+numpy
+pandas
+pyvista
+stpyvista
+streamlit
+plotly
+scipy

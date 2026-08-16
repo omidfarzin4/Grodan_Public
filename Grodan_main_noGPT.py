@@ -2,14 +2,30 @@ import numpy as np
 import pandas as pd
 import pyvista as pv
 from stpyvista import stpyvista
-import os 
+import os
 import glob
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 from scipy.interpolate import griddata
 import base64
-import openai
+from pathlib import Path
+
+#############################################################
+# Data location
+#
+# This app reads NRE test CSVs and product logos from a local data folder.
+# Set the GRODAN_DATA_ROOT environment variable to point at that folder,
+# e.g. on macOS/Linux:
+#     export GRODAN_DATA_ROOT="/path/to/Grodan"
+# or on Windows (PowerShell):
+#     $env:GRODAN_DATA_ROOT = "C:\path\to\Grodan"
+#
+# If unset, it defaults to a "data" folder next to this script. See
+# README.md for the expected folder structure.
+DATA_ROOT = Path(os.environ.get("GRODAN_DATA_ROOT", Path(__file__).resolve().parent / "data"))
+#############################################################
+
 #%% The Title of the Website, File paths and input command
 st.title('Grodan')
 
@@ -17,198 +33,198 @@ st.title('Grodan')
 col1, col2, col3 = st.columns([1, 2, 1])  # logouri stânga și dreapta
 
 with col1:
-    st.image(r"C:\Users\Omid\Desktop\Grodan_logo.jpg", width=120)
+    st.image(str(DATA_ROOT / "Grodan_logo.jpg"), width=120)
 
 with col3:
-    st.image(r"C:\Users\Omid\Desktop\Rockwool_logo.jpg", width=150)
+    st.image(str(DATA_ROOT / "Rockwool_logo.jpg"), width=150)
 
 
 #############################################################
 # Pahts for EC
 slabs_EC = {
     "Grodan Classic": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Classic/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Classic/EC/*.csv",
         "title": "Grodan Classic NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Classic NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Classic NG2.0.png"
     },
     "Grodan Elite": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Elite/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Elite/EC/*.csv",
         "title": "Grodan Elite NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Elite NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Elite NG2.0.png"
     },
     "Grodan GTMaster 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/GTMaster75/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/GTMaster75/EC/*.csv",
         "title": "Grodan Grotop Master NG2.0 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grotop Master NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grotop Master NG2.0.png"
     },
     "Grodan GTMaster 100": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/GTMaster100/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/GTMaster100/EC/*.csv",
         "title": "Grodan Grotop Master NG2.0 100",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grotop Master NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grotop Master NG2.0.png"
     },
     "Grodan GTMaster Dry": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/GTMasterDry/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/GTMasterDry/EC/*.csv",
         "title": "Grodan Grotop Master Dry NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grotop Master Dry NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grotop Master Dry NG2.0.png"
     },
     "Grodan Modified Prestige": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/ModifiedPrestige/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/ModifiedPrestige/EC/*.csv",
         "title": "Grodan Modified Prestige NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Prestige NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Prestige NG2.0.png"
     },
     "Grodan Modified Vital Dry": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/ModifiedVitalDry/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/ModifiedVitalDry/EC/*.csv",
         "title": "Grodan Modified Vital Dry NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital Dry NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital Dry NG2.0.png"
     },
     "Grodan Prestige": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Prestige/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Prestige/EC/*.csv",
         "title": "Grodan Prestige NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Prestige NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Prestige NG2.0.png"
     },
     "Grodan Vitaflor": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Vitaflor/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Vitaflor/EC/*.csv",
         "title": "Grodan Vitaflor NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Vitaflor NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Vitaflor NG2.0.png"
     },
     "Grodan Vital 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Vital75/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Vital75/EC/*.csv",
         "title": "Grodan Vital NG2.0 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital NG2.0.png"
     },
     "Grodan Vital LF": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/VitalLF/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/VitalLF/EC/*.csv",
         "title": "Grodan Vital NG2.0 – Loose Foil",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital NG2.0.png"
     },
     "Grodan Vital TF": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/VitalTF/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/VitalTF/EC/*.csv",
         "title": "Grodan Vital NG2.0 – Tight Foil",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital NG2.0.png"
     },
     "Cultilene Exact Air 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/ExactAir75/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/ExactAir75/EC/*.csv",
         "title": "Cultilene Exact Air 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Cultilene Exact Air 100": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/ExactAir100/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/ExactAir100/EC/*.csv",
         "title": "Cultilene Exact Air 100",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Cultilene Optimaxx 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/Optimaxx75/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/Optimaxx75/EC/*.csv",
         "title": "Cultilene Optimaxx 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Cultilene Optimaxx 100": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/Optimaxx100/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/Optimaxx100/EC/*.csv",
         "title": "Cultilene Optimaxx 100",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Vidawool TF High": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Vidawool/TFhigh/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Vidawool/TFhigh/EC/*.csv",
         "title": "Vidawool - Tight Foil (Curing oven profile top)",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Vidawool.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Vidawool.png"
     },
     "Vidawool TF Low": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Vidawool/TFlow/EC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Vidawool/TFlow/EC/*.csv",
         "title": "Vidawool - Tight Foil (Curing oven profile down)",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Vidawool.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Vidawool.png"
     }
 }
 
 # Pahts for WC
 slabs_WC = {
     "Grodan Classic": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Classic/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Classic/WC/*.csv",
         "title": "Grodan Classic NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Classic NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Classic NG2.0.png"
     },
     "Grodan Elite": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Elite/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Elite/WC/*.csv",
         "title": "Grodan Elite NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Elite NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Elite NG2.0.png"
     },
     "Grodan GTMaster 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/GTMaster75/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/GTMaster75/WC/*.csv",
         "title": "Grodan Grotop Master NG2.0 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grotop Master NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grotop Master NG2.0.png"
     },
     "Grodan GTMaster 100": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/GTMaster100/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/GTMaster100/WC/*.csv",
         "title": "Grodan Grotop Master NG2.0 100",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grotop Master NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grotop Master NG2.0.png"
     },
     "Grodan GTMaster Dry": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/GTMasterDry/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/GTMasterDry/WC/*.csv",
         "title": "Grodan Grotop Master Dry NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grotop Master Dry NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grotop Master Dry NG2.0.png"
     },
     "Grodan Modified Prestige": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/ModifiedPrestige/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/ModifiedPrestige/WC/*.csv",
         "title": "Grodan Modified Prestige NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Prestige NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Prestige NG2.0.png"
     },
     "Grodan Modified Vital Dry": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/ModifiedVitalDry/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/ModifiedVitalDry/WC/*.csv",
         "title": "Grodan Modified Vital Dry NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital Dry NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital Dry NG2.0.png"
     },
     "Grodan Prestige": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Prestige/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Prestige/WC/*.csv",
         "title": "Grodan Prestige NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Prestige NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Prestige NG2.0.png"
     },
     "Grodan Vitaflor": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Vitaflor/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Vitaflor/WC/*.csv",
         "title": "Grodan Vitaflor NG2.0",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Vitaflor NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Vitaflor NG2.0.png"
     },
     "Grodan Vital 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/Vital75/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/Vital75/WC/*.csv",
         "title": "Grodan Vital NG2.0 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital NG2.0.png"
     },
     "Grodan Vital LF": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/VitalLF/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/VitalLF/WC/*.csv",
         "title": "Grodan Vital NG2.0 – Loose Foil",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital NG2.0.png"
     },
     "Grodan Vital TF": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Grodan/VitalTF/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Grodan/VitalTF/WC/*.csv",
         "title": "Grodan Vital NG2.0 – Tight Foil",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Grodan Vital NG2.0.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Grodan Vital NG2.0.png"
     },
     "Cultilene Exact Air 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/ExactAir75/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/ExactAir75/WC/*.csv",
         "title": "Cultilene Exact Air 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Cultilene Exact Air 100": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/ExactAir100/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/ExactAir100/WC/*.csv",
         "title": "Cultilene Exact Air 100",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Cultilene Optimaxx 75": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/Optimaxx75/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/Optimaxx75/WC/*.csv",
         "title": "Cultilene Optimaxx 75",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Cultilene Optimaxx 100": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Cultilene/Optimaxx100/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Cultilene/Optimaxx100/WC/*.csv",
         "title": "Cultilene Optimaxx 100",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Cultilene.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Cultilene.png"
     },
     "Vidawool TF High": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Vidawool/TFhigh/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Vidawool/TFhigh/WC/*.csv",
         "title": "Vidawool - Tight Foil (Curing oven profile top)",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Vidawool.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Vidawool.png"
     },
     "Vidawool TF Low": {
-        "path": "C:/Users/Omid/Desktop/Grodan/Data and codes/Vidawool/TFlow/WC/*.csv",
+        "path": f"{DATA_ROOT}/Data and codes/Vidawool/TFlow/WC/*.csv",
         "title": "Vidawool - Tight Foil (Curing oven profile down)",
-        "logo":"C:/Users/Omid/Desktop/Grodan/Grodan Product Logos/Vidawool.png"
+        "logo": f"{DATA_ROOT}/Grodan Product Logos/Vidawool.png"
     }
 }
 
@@ -573,7 +589,7 @@ def load_csv_to_surface_WC(file_path):
 # --- GIF Display (working version)
 if slab1_key != "-- Select --" and slab2_key != "-- Select --":
     gif_name = f"{slab1_key.replace(' ', '_')}_vs_{slab2_key.replace(' ', '_')}.gif"
-    gif_path = f"C:/Users/Omid/Desktop/Grodan/Data and codes/pyvista/gifs2/output_comparison/{gif_name}"
+    gif_path = f"{DATA_ROOT}/Data and codes/pyvista/gifs2/output_comparison/{gif_name}"
     if os.path.exists(gif_path):
         with open(gif_path, "rb") as f:
             gif_data = f.read()
@@ -608,7 +624,7 @@ def generate_ai_commentary(title_slab1, title_slab2, data1, data2, kind="EC"):
 # GIF
 
 # gif_name = f"{slab1_key.replace(' ', '_')}_vs_{slab2_key.replace(' ', '_')}.gif"
-# st.image(f"C:/Users/Omid/Desktop/Grodan/Data and codes/pyvista/gifs2/output_comparison/{gif_name}",
+# st.image(f"{DATA_ROOT}/Data and codes/pyvista/gifs2/output_comparison/{gif_name}",
 #          caption="Animation view")
 
 
@@ -681,7 +697,7 @@ if slab1_key != "-- Select --" and slab2_key != "-- Select --" and "EC Distribut
     # ---------------------------
     plotter = pv.Plotter(shape=(1, 2))
     # Remove or comment out the GIF-related call so that it won’t write frames:
-    # plotter.open_gif('C:/Users/Omid/Desktop/Grodan/Data and codes/pyvista/Proto.gif')
+    # plotter.open_gif(f'{DATA_ROOT}/Data and codes/pyvista/Proto.gif')
     Grid_EC1 = load_csv_to_surface_EC(files_slab1_EC[time_stamp])
     Grid_EC2 = load_csv_to_surface_EC(files_slab2_EC[time_stamp])
     # Left subplot: Geometry and grid display
@@ -856,7 +872,7 @@ if slab1_key != "-- Select --" and slab2_key != "-- Select --" and "EC Uniformit
 # NRE for WC
 if slab1_key != "-- Select --" and slab2_key != "-- Select --" and "WC Distribution" in selected_viz:
     st.header("WC Distribution Comparisons (NRE Test Results)")
-    logo_path = "C:/UsersWindows 11 ENG/OneDrive/Desktop/GRODAN/Logos/Grodan Clasic NG20.png"
+    # logo_path = f"{DATA_ROOT}/Logos/Grodan Clasic NG20.png"  # unused, left as reference
 
     # position=(x, y), where x=0.0 is all the way left, y=1.0 is all the way top
     # size=(w, h) controls its relative footprint in the viewport
@@ -869,7 +885,7 @@ if slab1_key != "-- Select --" and slab2_key != "-- Select --" and "WC Distribut
     #----------------------------------------------------------
     plotter = pv.Plotter(shape=(1, 2))
     # Remove or comment out the GIF-related call so that it won’t write frames:
-    # plotter.open_gif('C:/Users/Omid/Desktop/Grodan/Data and codes/pyvista/Proto.gif')
+    # plotter.open_gif(f'{DATA_ROOT}/Data and codes/pyvista/Proto.gif')
     # Redefinirea logo_plane (pentru WC Distribution)
     eps = 0
     x_len, y_len = 100.0, 15.0
@@ -1040,9 +1056,7 @@ if slab1_key != "-- Select --" and slab2_key != "-- Select --" and "WC Uniformit
 
 #%% This is going to be an AI assistant.
 
-# openai.api_key = "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"
-
-
+# openai.api_key = os.environ.get("OPENAI_API_KEY")  # never hardcode API keys
 # # Format GPT prompt
 # def generate_prompt_from_csv(df):
 #     prompt = f"""You are an expert in plant rootzone water distribution.
